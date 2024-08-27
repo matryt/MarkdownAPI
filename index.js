@@ -7,7 +7,7 @@ import {config} from 'dotenv';
 config()
 
 const pythonPath = '/home/mat/traitementUrlObsidian.py'; // remplacer par le chemin du programme Python
-const markdownDir = '/home/mat/TemporaryObsidianStorage'; // remplacer par le chemin du dossier où enregistrer les fichiers Markdown
+const markdownDir = process.env.STORAGE_PATH; // remplacer par le chemin du dossier où enregistrer les fichiers Markdown
 
 async function handleRequests(req, res) {
     if (req.method === 'POST') {
