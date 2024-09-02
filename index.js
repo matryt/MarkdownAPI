@@ -3,26 +3,25 @@ import fs from 'fs';
 import path from 'path';
 import { spawn, exec } from 'child_process';
 import {config} from 'dotenv';
+import {homedir} from 'os';
+import {v4 as uuidv4} from "uuid";
 
 config()
 
 const pythonPath = '/home/mat/traitementUrlObsidian.py'; // remplacer par le chemin du programme Python
-const markdownDir = process.env.STORAGE_PATH; // remplacer par le chemin du dossier où enregistrer les fichiers Markdown
+const markdownDir = homedir() + process.env.STORAGE_PATH.split("~")[1]; // remplacer par le chemin du dossier où enregistrer les fichiers Markdown
 
 async function handleRequests(req, res) {
     if (req.method === 'POST') {
         console.log(req.body);
-        const { url, folder } = req.body;
+        const { url, folder, title } = req.body;
         if (!url || !folder) {
             res.writeHead(400, {'Content-Type': 'text/plain'});
             res.end('URL and folder are required');
             return;
         }
 
-        let fileUrl = url.split(":/")[1];
-        if (!fileUrl) fileUrl = url;
-
-        const markdownFile = path.join(markdownDir, folder, `${fileUrl}.md`);
+        const markdownFile = path.join(markdownDir, folder, `${title}.md`);
         const markdownDirPath = path.join(markdownDir, folder);
 
         try {
@@ -47,6 +46,9 @@ async function handleRequests(req, res) {
             pythonProcess.on('close', (code) => {
                 if (code !== 0) {
                     console.error('Erreur Python : le processus a échoué avec le code', code);
+		    res.statusCode = 500;
+		    res.end("Pb Python");
+		    return;
                 }
 
                 fs.writeFileSync(markdownFile, markdownContent);
