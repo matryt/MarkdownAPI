@@ -4,7 +4,6 @@ import path from 'path';
 import { spawn, exec } from 'child_process';
 import {config} from 'dotenv';
 import {homedir} from 'os';
-import {v4 as uuidv4} from "uuid";
 
 config()
 
@@ -14,7 +13,7 @@ const markdownDir = homedir() + process.env.STORAGE_PATH.split("~")[1]; // rempl
 async function handleRequests(req, res) {
     if (req.method === 'POST') {
         console.log(req.body);
-        const { url, folder, title } = req.body;
+        const { url, folder, title, tags, type, up } = req.body;
         if (!url || !folder) {
             res.writeHead(400, {'Content-Type': 'text/plain'});
             res.end('URL and folder are required');
@@ -29,7 +28,11 @@ async function handleRequests(req, res) {
                 fs.mkdirSync(markdownDirPath);
             }
 
-            const pythonProcess = spawn('/usr/bin/python3', [pythonPath, url]);
+            const arg = `{url:${url},type:${type},up:${up},tags:${tags.join("*")}}`;
+
+            console.log(arg);
+
+            const pythonProcess = spawn('/usr/bin/python3', [pythonPath, arg]);
 
             let markdownContent = '';
 
@@ -55,7 +58,7 @@ async function handleRequests(req, res) {
 
                 console.log(process.env.KEY_PATH)
 
-                exec(`cd ${markdownDir} && /usr/bin/git add ${markdownFile} && /usr/bin/git commit -m "Added ${fileUrl}.md"`, (error, stdout, stderr) => {
+                exec(`cd ${markdownDir} && /usr/bin/git add ${markdownFile} && /usr/bin/git commit -m "Added ${title}.md"`, (error, stdout, stderr) => {
                     if (error) {
                         console.error(`exec error: ${error}`);
                         return;
@@ -67,7 +70,7 @@ async function handleRequests(req, res) {
                             return;
                         }
                         console.log("Push fait !");
-                        res.write(`Markdown file created for ${fileUrl} in folder ${folder}`);
+                        res.write(`Markdown file created for ${title} in folder ${folder}`);
                         res.end();
                     });
                 });
